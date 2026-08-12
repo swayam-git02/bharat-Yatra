@@ -16,6 +16,28 @@ const db = new Database(path.resolve(dbPath));
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+// Auto-initialize SQLite Database Schema & Seed Data if missing (e.g. fresh Render deployment)
+try {
+  const tableCheck = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='users'").get();
+  if (!tableCheck) {
+    console.log('📦 Database missing `users` table. Auto-initializing schema from schema.sqlite.sql...');
+    const schemaPath = path.join(__dirname, '../database/schema.sqlite.sql');
+    if (fs.existsSync(schemaPath)) {
+      const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+      db.exec(schemaSql);
+      console.log('✅ SQLite database schema created successfully!');
+    }
+    const seedPath = path.join(__dirname, '../database/seed.sqlite.sql');
+    if (fs.existsSync(seedPath)) {
+      const seedSql = fs.readFileSync(seedPath, 'utf8');
+      db.exec(seedSql);
+      console.log('✅ SQLite database seed data inserted successfully!');
+    }
+  }
+} catch (initErr) {
+  console.error('⚠️ Database auto-initialization error:', initErr.message);
+}
+
 /**
  * Promise-wrapped query helper to keep compatibility with existing async/await controllers
  */
