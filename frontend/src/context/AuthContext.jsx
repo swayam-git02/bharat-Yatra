@@ -10,7 +10,7 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : INITIAL_USER;
   });
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem('bharat_yatra_is_logged_in') === 'true';
+    return localStorage.getItem('bharat_yatra_is_logged_in') === 'true' && !!localStorage.getItem('bharat_yatra_token');
   });
 
   const { showToast } = useToast();
@@ -18,10 +18,6 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('bharat_yatra_user', JSON.stringify(user));
     localStorage.setItem('bharat_yatra_is_logged_in', isLoggedIn);
-    if (isLoggedIn && !localStorage.getItem('bharat_yatra_token')) {
-      const defaultToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhZGl0eWFAYmhhcmF0eWF0cmEuY29tIiwibmFtZSI6IkFkaXR5YSIsImlhdCI6MTc4NjQzMTM3OCwiZXhwIjoxNzg5MDIzMzc4fQ.inQlkJgP-FDR1a889OtItgn8UFOm_4z5O7DqEt5Egd0';
-      localStorage.setItem('bharat_yatra_token', defaultToken);
-    }
   }, [user, isLoggedIn]);
 
   const login = async (email, password) => {
@@ -33,69 +29,58 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('bharat_yatra_token', data.token);
       }
       setIsLoggedIn(true);
-      const userName = data?.data?.name || (email ? email.split('@')[0].toUpperCase() : 'Traveler');
+      const userData = data?.data || { name: email.split('@')[0].toUpperCase(), email };
       setUser((prev) => ({
         ...prev,
-        email: email || prev.email,
-        name: userName
+        ...userData
       }));
-      showToast(`Welcome back, ${userName}! 🚀`, 'success');
+      showToast(`Welcome back, ${userData.name}! 🚀`, 'success');
       return true;
     } catch (err) {
-      console.warn('Backend login failed, using client session fallback:', err.message);
-      // Fallback token for offline / local session
-      const fallbackToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0QGJoYXJhdHlhdHJhLmNvbSJ9.dummy';
-      localStorage.setItem('bharat_yatra_token', fallbackToken);
-      setIsLoggedIn(true);
-      const userName = email ? email.split('@')[0].toUpperCase() : 'Traveler';
-      setUser((prev) => ({
-        ...prev,
-        email: email || prev.email,
-        name: userName
-      }));
-      showToast(`Welcome back, ${userName}! 🚀`, 'success');
-      return true;
+      console.error('Backend login error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Login failed. Please check your credentials.';
+      showToast(`Login failed: ${errorMsg}`, 'error');
+      return false;
     }
   };
 
   const signup = async (name, email, password) => {
     try {
       const { authService } = await import('../services/api');
-      const data = await authService.register(name, email, password || 'password123');
+      const data = await authService.register(name, email, password);
 
       if (data && data.token) {
         localStorage.setItem('bharat_yatra_token', data.token);
       }
       setIsLoggedIn(true);
-      const newUser = {
+      const userData = data?.data || {
         ...INITIAL_USER,
         name: name || 'Traveler',
         email,
         joinedDate: 'Just now'
       };
-      setUser(newUser);
+      setUser(userData);
       showToast(`Account created successfully! Welcome to Bharat Yatra, ${name}! 🎉`, 'success');
       return true;
     } catch (err) {
-      console.warn('Backend signup failed, using client session fallback:', err.message);
-      const fallbackToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJ0ZXN0QGJoYXJhdHlhdHJhLmNvbSJ9.dummy';
-      localStorage.setItem('bharat_yatra_token', fallbackToken);
-      setIsLoggedIn(true);
-      const newUser = {
-        ...INITIAL_USER,
-        name: name || 'Traveler',
-        email,
-        joinedDate: 'Just now'
-      };
-      setUser(newUser);
-      showToast(`Account created successfully! Welcome to Bharat Yatra, ${name}! 🎉`, 'success');
-      return true;
+      console.error('Backend signup error:', err);
+      const errorMsg = err.response?.data?.message || err.message || 'Signup failed. Please try again.';
+      showToast(`Signup failed: ${errorMsg}`, 'error');
+      return false;
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      const { authService } = await import('../services/api');
+      await authService.logout();
+    } catch (e) {
+      // Ignore network errors on logout
+    }
     setIsLoggedIn(false);
+    setUser(INITIAL_USER);
     localStorage.removeItem('bharat_yatra_token');
+    localStorage.removeItem('bharat_yatra_user');
     localStorage.setItem('bharat_yatra_is_logged_in', 'false');
     showToast('Logged out successfully.', 'info');
   };

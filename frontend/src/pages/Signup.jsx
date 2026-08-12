@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, User, Mail, Lock, ArrowRight } from 'lucide-react';
+import { MapPin, User, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 export default function Signup() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { signup } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name || !email) return;
-    signup(name, email);
-    navigate('/dashboard');
+    if (!name || !email || !password) return;
+    setIsSubmitting(true);
+    const success = await signup(name, email, password);
+    setIsSubmitting(false);
+    if (success) {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -79,10 +84,20 @@ export default function Signup() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 text-white font-poppins font-bold text-sm py-3 rounded-xl shadow-md transition-all hover:scale-[1.01]"
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 bg-saffron-500 hover:bg-saffron-600 disabled:opacity-70 text-white font-poppins font-bold text-sm py-3 rounded-xl shadow-md transition-all hover:scale-[1.01]"
           >
-            <span>Create Free Account</span>
-            <ArrowRight className="w-4 h-4" />
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Creating Account...</span>
+              </>
+            ) : (
+              <>
+                <span>Create Free Account</span>
+                <ArrowRight className="w-4 h-4" />
+              </>
+            )}
           </button>
         </form>
 

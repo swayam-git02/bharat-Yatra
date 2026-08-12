@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { MapPin, Compass, Calendar, Sparkles, Bookmark, User, Menu, X, Rocket, LogIn, Heart } from 'lucide-react';
+import { MapPin, Compass, Calendar, Sparkles, Bookmark, User, Menu, X, Rocket, LogIn, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export default function Navbar() {
@@ -8,7 +8,7 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { isLoggedIn, user } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -87,17 +87,34 @@ export default function Navbar() {
         {/* Right CTA Actions */}
         <div className="hidden lg:flex items-center gap-3">
           {isLoggedIn ? (
-            <Link
-              to="/profile"
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                isScrolled
-                  ? 'border-slate-200 bg-slate-50 text-navy-900 hover:bg-slate-100'
-                  : 'border-white/30 bg-white/10 text-white hover:bg-white/20'
-              }`}
-            >
-              <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
-              <span>{user.name.split(' ')[0]}</span>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link
+                to="/profile"
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
+                  isScrolled
+                    ? 'border-slate-200 bg-slate-50 text-navy-900 hover:bg-slate-100'
+                    : 'border-white/30 bg-white/10 text-white hover:bg-white/20'
+                }`}
+              >
+                <img src={user.avatar} alt={user.name} className="w-6 h-6 rounded-full object-cover" />
+                <span>{user.name.split(' ')[0]}</span>
+              </Link>
+              <button
+                onClick={async () => {
+                  await logout();
+                  navigate('/login');
+                }}
+                title="Log Out"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                  isScrolled
+                    ? 'border-red-200 bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'border-white/30 bg-white/10 text-red-300 hover:bg-red-500/20'
+                }`}
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Log Out</span>
+              </button>
+            </div>
           ) : (
             <Link
               to="/login"
@@ -152,17 +169,30 @@ export default function Navbar() {
 
           <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
             {isLoggedIn ? (
-              <Link
-                to="/profile"
-                onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-sm font-semibold text-slate-200"
-              >
-                <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
-                <div>
-                  <div className="font-bold text-white">{user.name}</div>
-                  <div className="text-xs text-slate-400">{user.email}</div>
-                </div>
-              </Link>
+              <div className="flex flex-col gap-2">
+                <Link
+                  to="/profile"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 bg-white/5 rounded-xl text-sm font-semibold text-slate-200"
+                >
+                  <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full object-cover" />
+                  <div>
+                    <div className="font-bold text-white">{user.name}</div>
+                    <div className="text-xs text-slate-400">{user.email}</div>
+                  </div>
+                </Link>
+                <button
+                  onClick={async () => {
+                    setMobileMenuOpen(false);
+                    await logout();
+                    navigate('/login');
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-semibold bg-red-500/20 text-red-300 border border-red-500/30 hover:bg-red-500/30"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Log Out</span>
+                </button>
+              </div>
             ) : (
               <Link
                 to="/login"

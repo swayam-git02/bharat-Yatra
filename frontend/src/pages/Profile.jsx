@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import Modal from '../components/common/Modal';
 import SectionHeader from '../components/common/SectionHeader';
-import { User, Mail, MapPin, Calendar, Award, Edit2, ShieldCheck, Heart, Sparkles } from 'lucide-react';
+import { User, Mail, MapPin, Calendar, Award, Edit2, ShieldCheck, Heart, Sparkles, LogOut } from 'lucide-react';
 
 export default function Profile() {
-  const { user, updateProfile } = useAuth();
+  const { user, updateProfile, logout } = useAuth();
+  const navigate = useNavigate();
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [name, setName] = useState(user.name);
@@ -17,6 +19,11 @@ export default function Profile() {
     e.preventDefault();
     updateProfile({ name, email, location, bio });
     setIsEditModalOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
   };
 
   return (
@@ -47,13 +54,23 @@ export default function Profile() {
                 </p>
               </div>
 
-              <button
-                onClick={() => setIsEditModalOpen(true)}
-                className="flex items-center gap-1.5 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 text-xs font-semibold px-4 py-2.5 rounded-xl border border-saffron-200 transition-colors self-center"
-              >
-                <Edit2 className="w-4 h-4" />
-                <span>Edit Profile</span>
-              </button>
+              <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2.5 self-center">
+                <button
+                  onClick={() => setIsEditModalOpen(true)}
+                  className="flex items-center gap-1.5 bg-saffron-50 hover:bg-saffron-100 text-saffron-700 text-xs font-semibold px-4 py-2.5 rounded-xl border border-saffron-200 transition-colors"
+                >
+                  <Edit2 className="w-4 h-4" />
+                  <span>Edit Profile</span>
+                </button>
+
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-4 py-2.5 rounded-xl border border-red-200 transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Log Out</span>
+                </button>
+              </div>
             </div>
 
             <p className="text-slate-600 text-xs sm:text-sm max-w-2xl leading-relaxed pt-1">{user.bio}</p>

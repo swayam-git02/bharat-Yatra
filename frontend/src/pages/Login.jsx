@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { MapPin, LogIn, Lock, Mail, ArrowRight } from 'lucide-react';
+import { MapPin, LogIn, Lock, Mail, Loader2 } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email) return;
-    login(email, password);
-    navigate('/dashboard');
+    if (!email || !password) return;
+    setIsSubmitting(true);
+    const success = await login(email, password);
+    setIsSubmitting(false);
+    if (success) {
+      navigate('/dashboard');
+    }
   };
 
   return (
@@ -71,10 +76,20 @@ export default function Login() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-navy-900 hover:bg-navy-950 text-white font-poppins font-bold text-sm py-3 rounded-xl shadow-md transition-all hover:scale-[1.01]"
+            disabled={isSubmitting}
+            className="w-full flex items-center justify-center gap-2 bg-navy-900 hover:bg-navy-950 disabled:opacity-70 text-white font-poppins font-bold text-sm py-3 rounded-xl shadow-md transition-all hover:scale-[1.01]"
           >
-            <LogIn className="w-4 h-4" />
-            <span>Log In</span>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                <span>Logging In...</span>
+              </>
+            ) : (
+              <>
+                <LogIn className="w-4 h-4" />
+                <span>Log In</span>
+              </>
+            )}
           </button>
         </form>
 

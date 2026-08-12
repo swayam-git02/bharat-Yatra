@@ -59,6 +59,14 @@ export const authService = {
   getMe: async () => {
     const res = await api.get('/auth/me');
     return res.data;
+  },
+  logout: async () => {
+    try {
+      const res = await api.post('/auth/logout');
+      return res.data;
+    } catch (e) {
+      return null;
+    }
   }
 };
 
